@@ -1,39 +1,68 @@
 ---
-- name: Completely Remove RealVNC Server
+- name: Completely Remove RealVNC Server (With Detailed Logs)
   hosts: all
   become: yes
 
   tasks:
-    # 1. หยุดและปิดการทำงานของ Service ก่อน (สำคัญมาก)
+    # ---------------------------------------------------------
+    # 1. หยุด Service
+    # ---------------------------------------------------------
     - name: Stop and Disable RealVNC Service
       service:
         name: vncserver-x11-serviced
         state: stopped
         enabled: no
-      ignore_errors: yes  # ใส่เผื่อไว้ กรณีที่โปรแกรมอาจจะไม่อยู่แล้ว จะได้ไม่ Error
+      ignore_errors: yes
+      register: service_stop_result  # <--- เก็บผลลัพธ์ไว้
 
-    # 2. ลบโปรแกรมพร้อมไฟล์ Config (Purge)
+    - name: Show Stop Service Result
+      debug:
+        var: service_stop_result     # <--- แสดงผลลัพธ์ออกมา
+
+    # ---------------------------------------------------------
+    # 2. ลบโปรแกรม (Purge)
+    # ---------------------------------------------------------
     - name: Purge RealVNC Package
       apt:
         name: realvnc-vnc-server
         state: absent
-        purge: yes       # ลบไฟล์ Config ที่ตกค้างด้วย
-        autoremove: yes  # ลบ dependencies ที่ไม่ได้ใช้แล้ว
+        purge: yes
+        autoremove: yes
+      register: apt_remove_result    # <--- เก็บผลลัพธ์ไว้
 
-    # 3. ลบไฟล์ติดตั้ง .deb ที่โหลดมาทิ้งไว้ใน /tmp
+    - name: Show Apt Remove Result
+      debug:
+        # แสดงเฉพาะ stdout (ข้อความที่ apt พ่นออกมา) เพื่อให้อ่านง่าย
+        # หรือถ้าไม่มี stdout ให้แสดง msg (กรณี apt module ไม่คืน text)
+        msg: 
+          - "{{ apt_remove_result.stdout_lines | default('No standard output') }}"
+          - "State Changed: {{ apt_remove_result.changed }}"
+
+    # ---------------------------------------------------------
+    # 3. ลบไฟล์ติดตั้ง
+    # ---------------------------------------------------------
     - name: Remove Installer File
       file:
         path: /tmp/realvnc-server.deb
         state: absent
+      register: file_remove_result   # <--- เก็บผลลัพธ์ไว้
 
-    # 4. (Optional) ตรวจสอบความแน่ใจว่า Service หายไปจริง
+    - name: Show File Removal Result
+      debug:
+        var: file_remove_result
+
+    # ---------------------------------------------------------
+    # 4. ตรวจสอบความแน่ใจ (Verify)
+    # ---------------------------------------------------------
     - name: Verify Removal
       shell: systemctl status vncserver-x11-serviced
       register: service_check
-      failed_when: service_check.rc == 0  # ถ้า Command สำเร็จ (เจอ Service) แปลว่าลบไม่หมด ให้ฟ้อง Error
-      ignore_errors: yes # ปกติ systemctl status จะ error ถ้าไม่เจอ service ซึ่งคือสิ่งที่เราต้องการ
+      failed_when: service_check.rc == 0
+      ignore_errors: yes
 
-    - name: Show Removal Result
+    - name: Show Final Verification
       debug:
-        msg: "RealVNC has been successfully removed."
-      when: service_check.rc != 0 # แสดงข้อความเมื่อหา Service ไม่เจอแล้ว
+        msg: 
+          - "Service Found Status (RC): {{ service_check.rc }}"
+          - "Note: If RC is NOT 0, it means the service is successfully GONE."
+          - "{{ service_check.stderr_lines }}"
