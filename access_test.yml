@@ -11,13 +11,14 @@
       ansible.builtin.debug:
         var: ansible_user
 
-    - name: Check whoami (no sudo)
-      ansible.builtin.command: whoami
-      register: whoami_no_sudo
+    - name: Check id (with sudo)
+      become: yes
+      ansible.builtin.command: id -u
+      register: sudo_id
 
-    - name: Print whoami (no sudo)
+    - name: Print sudo ID (should be 0 = root)
       ansible.builtin.debug:
-        msg: "whoami (no sudo) = {{ whoami_no_sudo.stdout }}"
+        msg: "sudo uid = {{ sudo_id.stdout }}"
 
     - name: Check whoami (with sudo)
       become: yes
