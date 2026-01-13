@@ -1,0 +1,47 @@
+- name: Install RealVNC Server
+  hosts: all
+  become: yes
+  gather_facts: no
+
+  tasks:
+
+    - name: Ensure apt dependencies
+      ansible.builtin.apt:
+        name:
+          - wget
+          - apt-transport-https
+          - gnupg
+        update_cache: yes
+
+    - name: Download RealVNC GPG key
+      ansible.builtin.command: >
+        wget -O - https://www.realvnc.com/download/key/software/linux/ | sudo gpg --dearmor -o /usr/share/keyrings/realvnc.gpg
+      args:
+        creates: /usr/share/keyrings/realvnc.gpg
+
+    - name: Add RealVNC APT repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/realvnc.list
+        content: |
+          deb [arch=amd64 signed-by=/usr/share/keyrings/realvnc.gpg] https://repo.realvnc.com/deb/ realvnc main
+
+    - name: Install RealVNC Server package
+      ansible.builtin.apt:
+        name: realvnc-vnc-server
+        state: present
+        update_cache: yes
+
+    - name: Enable VNC Server service
+      ansible.builtin.systemd:
+        name: vncserver-x11-serviced
+        enabled: yes
+        state: started
+
+    - name: Show VNC server status
+      ansible.builtin.command: systemctl status vncserver-x11-serviced --no-pager
+      register: vnc_status
+      changed_when: false
+
+    - name: Print VNC server status
+      ansible.builtin.debug:
+        msg: "{{ vnc_status.stdout }}"
