@@ -1,6 +1,11 @@
 - name: Start sfremote service
+  hosts: all
   become: yes
-  ansible.builtin.systemd:
-    name: sfremote.service
-    state: started
-    enabled: yes
+  gather_facts: no
+
+  tasks:
+    - name: Start and enable sfremote.service
+      ansible.builtin.systemd:
+        name: sfremote.service
+        state: started
+        enabled: yes
