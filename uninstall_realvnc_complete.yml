@@ -35,15 +35,15 @@
       debug:
         msg: "Package Removed: {{ purge_result.changed }}"
 
-    # 3. ตรวจสอบครั้งสุดท้าย (หา Process ที่เกี่ยวกับ vnc)
-    - name: Check for Running VNC Processes
-      shell: ps -ef | grep [v]nc || true
+# 3. ตรวจสอบครั้งสุดท้าย (เฉพาะ Process ของ RealVNC จริงๆ)
+    - name: Check for RealVNC Binaries
+      # หาเฉพาะ process ที่ชื่อ vncserver-x11 และตัด grep/ansible ออก
+      shell: ps -ef | grep "vncserver-x11" | grep -v grep | grep -v ansible || true
       register: vnc_ps_check
       changed_when: false
 
-    # แสดงผลเฉพาะบรรทัดที่มีคำว่า vnc (ถ้าว่างแปลว่าเกลี้ยง)
     - name: Final VNC Process Check
       debug:
         msg: 
-          - "Remaining VNC Processes:"
-          - "{{ vnc_ps_check.stdout_lines | default('None (Clean)') }}"
+          - "RealVNC Processes Remaining:"
+          - "{{ vnc_ps_check.stdout_lines | default('NONE (System is Clean) ✅') }}"
