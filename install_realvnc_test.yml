@@ -2,10 +2,14 @@
 - name: Install RealVNC Server (Simulation)
   hosts: all
   become: yes
+  # --- ส่วนที่เพิ่มเข้ามา ---
+  vars:
+    ansible_become_pass: "{{ ansible_password }}"
+  # -----------------------
+  
   tasks:
     - name: Download RealVNC Server Package
       get_url:
-        # ลิงก์นี้เป็นเวอร์ชันล่าสุด ณ ปัจจุบัน (7.x)
         url: https://downloads.realvnc.com/download/file/vnc.files/VNC-Server-7.10.0-Linux-x64.deb
         dest: /tmp/realvnc-server.deb
         mode: '0644'
@@ -15,5 +19,4 @@
         deb: /tmp/realvnc-server.deb
         state: present
         update_cache: yes
-      ignore_errors: yes 
-      # ignore_errors: ใส่เผื่อไว้กรณี Dependency มีปัญหา แต่อยากให้จบ Task
+      # ลบ ignore_errors ออกครับ เราอยากเห็น Error จริงถ้ามันพัง
