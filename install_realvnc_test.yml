@@ -1,10 +1,7 @@
 ---
 - name: Install RealVNC Server (Simulation)
   hosts: all
-  become: yes
-  # --- ส่วนที่เพิ่มเข้ามา ---
-
-  # -----------------------
+  # เอา become: yes ตรงกลางออกก่อน กันงงเรื่องย่อหน้า
   
   tasks:
     - name: Download RealVNC Server Package
@@ -18,4 +15,4 @@
         deb: /tmp/realvnc-server.deb
         state: present
         update_cache: yes
-      # ลบ ignore_errors ออกครับ เราอยากเห็น Error จริงถ้ามันพัง
+      become: yes  # <--- ใส่บรรทัดนี้ที่นี่! (ย่อหน้าเท่ากับ apt)
