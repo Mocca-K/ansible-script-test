@@ -1,38 +1,47 @@
-- name: Check access to all hosts
+- name: Access Test for All Hosts
   hosts: all
   gather_facts: no
 
   tasks:
+
     - name: Ping (basic connectivity)
       ansible.builtin.ping:
 
-    - name: Show ansible_user (user ที่ Ansible ใช้ ssh)
+    - name: Show ansible_user (user used for SSH)
       ansible.builtin.debug:
         var: ansible_user
 
-    - name: Check whoami without sudo
+    - name: Check whoami (no sudo)
       ansible.builtin.command: whoami
       register: whoami_no_sudo
 
-    - name: Print whoami without sudo
+    - name: Print whoami (no sudo)
       ansible.builtin.debug:
         msg: "whoami (no sudo) = {{ whoami_no_sudo.stdout }}"
 
-    - name: Check whoami with sudo (become)
+    - name: Check whoami (with sudo)
       become: yes
       ansible.builtin.command: whoami
       register: whoami_sudo
 
-    - name: Print whoami with sudo
+    - name: Print whoami (with sudo)
       ansible.builtin.debug:
         msg: "whoami (sudo) = {{ whoami_sudo.stdout }}"
 
-    - name: Test simple sudo command
+    - name: Test sudo permission (run true)
       become: yes
-      ansible.builtin.command: true
+      ansible.builtin.command: "true"
       register: sudo_test
       changed_when: false
 
-    - name: Show sudo test result
+    - name: Print sudo test result
       ansible.builtin.debug:
         msg: "sudo OK"
+
+    - name: Show hostname
+      ansible.builtin.command: hostname
+      register: hostn
+
+    - name: Print hostname
+      ansible.builtin.debug:
+        msg: "hostname = {{ hostn.stdout }}"
