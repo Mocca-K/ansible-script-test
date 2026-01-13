@@ -1,0 +1,6 @@
+- name: Start sfremote service
+  become: yes
+  ansible.builtin.systemd:
+    name: sfremote.service
+    state: started
+    enabled: yes
