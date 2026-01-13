@@ -1,18 +1,37 @@
 ---
-- name: Install RealVNC Server (Simulation)
+- name: Install, Start and Check RealVNC Server
   hosts: all
-  # ใส่ become: yes ตรงนี้เลยก็ได้ครับ ครอบคลุมทั้งไฟล์ (ง่ายกว่า)
-  become: yes 
-  
+  become: yes
+
   tasks:
+    # 1. ดาวน์โหลด
     - name: Download RealVNC Server Package
       get_url:
         url: https://downloads.realvnc.com/download/file/vnc.files/VNC-Server-7.10.0-Linux-x64.deb
         dest: /tmp/realvnc-server.deb
         mode: '0644'
 
+    # 2. ติดตั้ง
     - name: Install RealVNC from .deb
       apt:
         deb: /tmp/realvnc-server.deb
         state: present
         update_cache: yes
+
+    # 3. สั่ง Start และ Enable
+    - name: Start and Enable RealVNC Service
+      service:
+        name: vncserver-x11-serviced
+        state: started
+        enabled: yes
+
+    # 4. (เพิ่มใหม่) ตรวจสอบสถานะ Service และเก็บผลลัพธ์ไว้
+    - name: Check Service Status
+      command: systemctl status vncserver-x11-serviced
+      register: vnc_service_status # เก็บผลลัพธ์ลงตัวแปรชื่อนี้
+      changed_when: false          # บอก Ansible ว่าการเช็คเฉยๆ ไม่นับเป็นการเปลี่ยนแปลง (จะได้ไม่ขึ้นสีเหลือง)
+
+    # 5. (เพิ่มใหม่) แสดงผลลัพธ์ออกมาทางหน้าจอ Log
+    - name: Show Service Status Output
+      debug:
+        var: vnc_service_status.stdout_lines
