@@ -1,7 +1,8 @@
 ---
 - name: Install RealVNC Server (Simulation)
   hosts: all
-  # เอา become: yes ตรงกลางออกก่อน กันงงเรื่องย่อหน้า
+  # ใส่ become: yes ตรงนี้เลยก็ได้ครับ ครอบคลุมทั้งไฟล์ (ง่ายกว่า)
+  become: yes 
   
   tasks:
     - name: Download RealVNC Server Package
@@ -15,4 +16,3 @@
         deb: /tmp/realvnc-server.deb
         state: present
         update_cache: yes
-      become: yes  # <--- ใส่บรรทัดนี้ที่นี่! (ย่อหน้าเท่ากับ apt)
